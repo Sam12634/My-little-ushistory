@@ -18,40 +18,7 @@ As players progress, they unlock more advanced combinations and eventually build
 
 ---
 
-## 📁 Project Structure
 
-us-history-alchemy/
-│
-├── README.md
-├── schema/
-│   └── schema.sql
-│
-├── src/
-│   ├── game/
-│   │   ├── elements.js
-│   │   ├── combinations.js
-│   │   └── logic.js
-│   │
-│   ├── ui/
-│   │   ├── screens/
-│   │   │   ├── MainMenu.js
-│   │   │   ├── GameScreen.js
-│   │   │   └── ElementListScreen.js
-│   │   │
-│   │   └── components/
-│   │       ├── ElementCard.js
-│   │       ├── ComboButton.js
-│   │       └── Header.js
-│   │
-│   └── utils/
-│       └── supabaseClient.js
-│
-└── docs/
-    ├── flowchart.md
-    ├── database-design.md
-    └── element-list.md
-
----
 
 ## 🧱 Database Design
 
