@@ -20,3 +20,91 @@ As players progress, they unlock more advanced combinations and eventually build
 
 ## 🗂️ Project Structure
 
+us-history-alchemy/
+│
+├── README.md
+├── schema/
+│   └── schema.sql
+│
+├── src/
+│   ├── game/
+│   │   ├── elements.js
+│   │   ├── combinations.js
+│   │   └── logic.js
+│   │
+│   ├── ui/
+│   │   ├── screens/
+│   │   │   ├── MainMenu.js
+│   │   │   ├── GameScreen.js
+│   │   │   └── ElementListScreen.js
+│   │   │
+│   │   └── components/
+│   │       ├── ElementCard.js
+│   │       ├── ComboButton.js
+│   │       └── Header.js
+│   │
+│   └── utils/
+│       └── supabaseClient.js
+│
+└── docs/
+├── flowchart.md
+├── database-design.md
+└── element-list.md
+
+
+---
+
+## 🧱 Database Design
+
+The game uses three main tables:
+
+### **Elements**
+Stores all game elements (base, first-tier, second-tier, etc.)
+
+### **Combinations**
+Defines which two elements create a new one.
+
+### **User Progress**
+Tracks which elements each player has unlocked.
+
+Full SQL schema is in `schema/schema.sql`.
+
+---
+
+## 🔧 Tech Stack
+
+- **Supabase** (database + auth)
+- **JavaScript** (game logic)
+- **Modular UI structure** (screens + components)
+- **GitHub** for version control and documentation
+
+---
+
+## 🚀 Setup Instructions
+
+1. Clone the repository  
+2. Create a Supabase project  
+3. Paste the SQL schema into the Supabase SQL editor  
+4. Add your Supabase URL + anon key to `supabaseClient.js`  
+5. Start building game logic in `src/game/`
+
+---
+
+## 📄 Documentation
+
+All design documents live in the `/docs` folder:
+
+- Flowchart  
+- Database design  
+- Element list  
+- Combination logic  
+
+---
+
+## ✨ Future Features
+
+- Full UI for combining elements  
+- Progress saving/loading  
+- Achievements  
+- Era progression  
+- Visual element cards  
