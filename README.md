@@ -18,7 +18,7 @@ As players progress, they unlock more advanced combinations and eventually build
 
 ---
 
-## 🗂️ Project Structure
+## 📁 Project Structure
 
 us-history-alchemy/
 │
@@ -47,10 +47,9 @@ us-history-alchemy/
 │       └── supabaseClient.js
 │
 └── docs/
-├── flowchart.md
-├── database-design.md
-└── element-list.md
-
+    ├── flowchart.md
+    ├── database-design.md
+    └── element-list.md
 
 ---
 
