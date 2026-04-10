@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Replace these with your real values from Supabase → Project Settings → API
 const SUPABASE_URL = "https://nmhyokohnmunfwyxekoj.supabase.co"
