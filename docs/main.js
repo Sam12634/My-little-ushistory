@@ -1,4 +1,4 @@
-import { supabase } from './src/utils/supabaseClient.js'
+import { supabase } from '../src/utils/supabaseClient.js'
 
 // Load all elements into dropdowns
 async function loadElements() {
