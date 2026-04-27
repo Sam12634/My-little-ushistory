@@ -1,33 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My-little-ushistory</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Little US History</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <h1>My-little-ushistory</h1>
+    <h1>My Little US History</h1>
 
-  <div id="game">
+    <div id="game-container">
+        <div id="elements-container"></div>
 
-    <!-- Element selection area -->
-    <div>
-      <h2>Choose two elements</h2>
+        <div id="combine-area">
+            <p>Select two elements to combine</p>
+            <div id="selected-elements"></div>
+            <button id="combineButton">Combine</button>
+        </div>
 
-      <!-- These dropdowns get filled by loadElements() -->
-      <select id="elementA"></select>
-      <select id="elementB"></select>
-
-      <!-- Clicking this runs combine() -->
-      <button id="combineBtn">Combine</button>
+        <!-- ⭐ NEW: Hint button + display -->
+        <div id="hint-section">
+            <button id="hintButton">Get Hint</button>
+            <div id="hintDisplay"></div>
+        </div>
     </div>
 
-    <!-- The result of the combination appears here -->
-    <div id="result"></div>
-  </div>
+    <!-- Your game scripts -->
+    <script src="elements.js"></script>
+    <script src="combinations.js"></script>
 
-  <!-- Load your JavaScript file -->
-  <script type="module" src="main.js"></script>
+    <!-- ⭐ NEW: Supabase client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main script -->
+    <script src="script.js"></script>
+
 </body>
 </html>
