@@ -1,36 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Little US History</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Little US History</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <h1>My Little US History</h1>
 
-    <h1>My Little US History</h1>
+  <div id="game-container">
+    <div id="elements-container"></div>
 
-    <div id="game-container">
-        <div id="elements-container"></div>
-
-        <div id="combine-area">
-            <p>Select two elements to combine</p>
-            <div id="selected-elements"></div>
-            <button id="combineButton">Combine</button>
-        </div>
-
-        <!-- ⭐ Hint UI -->
-        <div id="hint-section">
-            <button id="hintButton">Get Hint</button>
-            <div id="hintDisplay"></div>
-        </div>
+    <div id="combine-area">
+      <p>Select two elements to combine</p>
+      <div id="selected-elements"></div>
+      <button id="combineButton">Combine</button>
     </div>
 
-    <!-- Load Supabase client -->
-    <script type="module" src="supabaseClient.js"></script>
+    <!-- Hint UI -->
+    <div id="hint-section">
+      <button id="hintButton">Get Hint</button>
+      <div id="hintDisplay"></div>
+    </div>
+  </div>
 
-    <!-- Load main game logic as a module -->
-    <script type="module" src="main.js"></script>
+  <!-- Load Supabase client as a module (keep your credentials inside this file) -->
+  <script type="module" src="supabaseClient.js"></script>
 
+  <!-- Main game logic (module) -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
