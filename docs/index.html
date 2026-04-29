@@ -19,22 +19,18 @@
             <button id="combineButton">Combine</button>
         </div>
 
-        <!-- ⭐ NEW: Hint button + display -->
+        <!-- ⭐ Hint UI -->
         <div id="hint-section">
             <button id="hintButton">Get Hint</button>
             <div id="hintDisplay"></div>
         </div>
     </div>
 
-    <!-- Your game scripts -->
-    <script src="elements.js"></script>
-    <script src="combinations.js"></script>
+    <!-- Load Supabase client -->
+    <script type="module" src="supabaseClient.js"></script>
 
-    <!-- ⭐ NEW: Supabase client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Main script -->
-    <script src="script.js"></script>
+    <!-- Load main game logic as a module -->
+    <script type="module" src="main.js"></script>
 
 </body>
 </html>
