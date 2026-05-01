@@ -1,17 +1,12 @@
-// combinations.js
-// Local fallback combinations. Each combo should include elementA, elementB, combo_id, result.
+// src/game/combinations.js
+// Local fallback combinations matching Supabase schema
 
 export const combinations = [
   {
-    elementA: "Colonies",
-    elementB: "Revolution",
-    combo_id: "colonies-revolution",
-    result: "Independence"
-  },
-  {
-    elementA: "Revolution",
-    elementB: "Constitution",
-    combo_id: "revolution-constitution",
-    result: "New Government"
+    combo_id: "aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+    element_a_id: "11111111-1111-1111-1111-111111111111", // Colonies
+    element_b_id: "22222222-2222-2222-2222-222222222222", // Revolution
+    result_id: "33333333-3333-3333-3333-333333333333",     // Independence
+    notes: "Arguments for independence encourage the colonies to break away."
   }
 ];
