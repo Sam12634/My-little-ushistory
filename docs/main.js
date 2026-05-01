@@ -1,7 +1,8 @@
 // main.js
-import supabase from "./supabaseClient.js";
-import { elements as localElements } from "./elements.js";
-import { combinations as localCombinations } from "./combinations.js";
+import supabase from "./src/utils/supabaseClient.js";
+import { elements as localElements } from "./src/game/elements.js";
+import { combinations as localCombinations } from "./src/game/combinations.js";
+
 
 /*
   Configuration
