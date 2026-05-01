@@ -1,20 +1,23 @@
 // main.js
 import supabase from "./supabaseClient.js";
+import { elements as localElements } from "./elements.js";
+import { combinations as localCombinations } from "./combinations.js";
 
-// If you keep a local elements.js, import it. If not, leave this commented.
-// import { elements as localElements } from "./elements.js";
-
-// -----------------------------
-// Config
-// -----------------------------
-const USE_ELEMENTS_FROM_SUPABASE = true; // set false to use local elements array
+/*
+  Configuration
+  - Set USE_COMBOS_FROM_SUPABASE true to fetch combos from Supabase (recommended if combos are stored there)
+  - Set USE_ELEMENTS_FROM_SUPABASE true to fetch elements from Supabase (optional)
+*/
+const USE_COMBOS_FROM_SUPABASE = true;
+const USE_ELEMENTS_FROM_SUPABASE = false; // set true if you store elements in Supabase
 
 // -----------------------------
 // Game state
 // -----------------------------
 let elements = []; // will be populated from Supabase or local
-let combinations = []; // will be populated from Supabase
-const comboLookup = {}; // normalized key -> combo_id
+let combinations = []; // will be populated from Supabase or local
+let comboLookup = {}; // normalized key -> combo_id
+
 let selectedA = null;
 let selectedB = null;
 
@@ -48,7 +51,7 @@ async function fetchCombinationsFromSupabase() {
     .select("elementA, elementB, combo_id, result");
 
   if (error) {
-    console.error("Error fetching combinations:", error);
+    console.error("Error fetching combinations from Supabase:", error);
     return [];
   }
   return data || [];
@@ -60,7 +63,7 @@ async function fetchElementsFromSupabase() {
     .select("id, name");
 
   if (error) {
-    console.error("Error fetching elements:", error);
+    console.error("Error fetching elements from Supabase:", error);
     return [];
   }
   return data || [];
@@ -85,8 +88,7 @@ async function getHintsForCombo(comboId) {
 // Build lookup and render
 // -----------------------------
 function buildComboLookup() {
-  comboLookup = {}; // reset (reassign below)
-  // eslint-disable-next-line no-unused-vars
+  comboLookup = {};
   for (const c of combinations) {
     const key = normalizeCombo(c.elementA, c.elementB);
     comboLookup[key] = c.combo_id;
@@ -110,7 +112,7 @@ function renderElements() {
 }
 
 // -----------------------------
-// Selection and combine logic
+// Selection & combine logic
 // -----------------------------
 function selectElement(name) {
   if (!selectedA) {
@@ -153,7 +155,7 @@ function handleCombine() {
   );
 
   if (result) {
-    // Replace with your in-game discovery flow
+    // Replace with your in-game discovery flow instead of alert if desired
     alert(`You discovered: ${result.result}`);
   } else {
     alert("No discovery found.");
@@ -189,21 +191,26 @@ async function handleHintButton() {
 // -----------------------------
 async function init() {
   try {
-    // Load combinations from Supabase
-    combinations = await fetchCombinationsFromSupabase();
-
-    // Load elements either from Supabase or local fallback
-    if (USE_ELEMENTS_FROM_SUPABASE) {
-      elements = await fetchElementsFromSupabase();
-      // If table stores id and name, ensure name exists
-      elements = elements.map(e => ({ id: e.id, name: e.name }));
+    // Load combinations
+    if (USE_COMBOS_FROM_SUPABASE) {
+      combinations = await fetchCombinationsFromSupabase();
+      if (!combinations || combinations.length === 0) {
+        // fallback to local if Supabase returned nothing
+        combinations = localCombinations || [];
+      }
     } else {
-      // If you keep a local elements.js, uncomment the import at top and use:
-      // elements = localElements;
-      elements = [
-        { id: "colonies", name: "Colonies" },
-        { id: "revolution", name: "Revolution" }
-      ];
+      combinations = localCombinations || [];
+    }
+
+    // Load elements
+    if (USE_ELEMENTS_FROM_SUPABASE) {
+      const fetched = await fetchElementsFromSupabase();
+      elements = (fetched || []).map(e => ({ id: e.id, name: e.name }));
+      if (!elements || elements.length === 0) {
+        elements = localElements || [];
+      }
+    } else {
+      elements = localElements || [];
     }
 
     // Build lookup and render UI
