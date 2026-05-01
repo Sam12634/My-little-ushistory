@@ -1,23 +1,22 @@
 // main.js
+// Supabase-first, local fallback, UUID-aware, tier-grouped UI
+
 import supabase from "./src/utils/supabaseClient.js";
 import { elements as localElements } from "./src/game/elements.js";
 import { combinations as localCombinations } from "./src/game/combinations.js";
 
-
-/*
-  Configuration
-  - Set USE_COMBOS_FROM_SUPABASE true to fetch combos from Supabase (recommended if combos are stored there)
-  - Set USE_ELEMENTS_FROM_SUPABASE true to fetch elements from Supabase (optional)
-*/
-const USE_COMBOS_FROM_SUPABASE = true;
-const USE_ELEMENTS_FROM_SUPABASE = false; // set true if you store elements in Supabase
+// -----------------------------
+// Config
+// -----------------------------
+const USE_SUPABASE = true; // always try Supabase first
 
 // -----------------------------
 // Game state
 // -----------------------------
-let elements = []; // will be populated from Supabase or local
-let combinations = []; // will be populated from Supabase or local
-let comboLookup = {}; // normalized key -> combo_id
+let elements = [];          // full element objects
+let combinations = [];      // full combination objects
+let nameMap = {};           // uuid → element_name
+let comboLookup = {};       // "A-B" → combo_id
 
 let selectedA = null;
 let selectedB = null;
@@ -27,7 +26,7 @@ let currentHintLevel = 0;
 let currentHints = [];
 
 // -----------------------------
-// Utilities
+// Utility helpers
 // -----------------------------
 function normalizeCombo(a, b) {
   return [a, b].sort().join("-");
@@ -46,32 +45,31 @@ function updateSelectedDisplay() {
 // -----------------------------
 // Supabase fetchers
 // -----------------------------
-async function fetchCombinationsFromSupabase() {
-  const { data, error } = await supabase
-    .from("combinations")
-    .select("elementA, elementB, combo_id, result");
-
-  if (error) {
-    console.error("Error fetching combinations from Supabase:", error);
-    return [];
-  }
-  return data || [];
-}
-
 async function fetchElementsFromSupabase() {
   const { data, error } = await supabase
     .from("elements")
-    .select("id, name");
+    .select("element_id, element_name, tier, description");
 
   if (error) {
-    console.error("Error fetching elements from Supabase:", error);
-    return [];
+    console.error("Error fetching elements:", error);
+    return null;
   }
-  return data || [];
+  return data;
 }
 
-async function getHintsForCombo(comboId) {
-  if (!comboId) return [];
+async function fetchCombinationsFromSupabase() {
+  const { data, error } = await supabase
+    .from("combinations")
+    .select("combo_id, element_a_id, element_b_id, result_id, notes");
+
+  if (error) {
+    console.error("Error fetching combinations:", error);
+    return null;
+  }
+  return data;
+}
+
+async function fetchHints(comboId) {
   const { data, error } = await supabase
     .from("hints")
     .select("hint_level, hint_text")
@@ -86,34 +84,86 @@ async function getHintsForCombo(comboId) {
 }
 
 // -----------------------------
-// Build lookup and render
+// Data transformation
 // -----------------------------
-function buildComboLookup() {
-  comboLookup = {};
+function buildNameMap() {
+  nameMap = {};
+  for (const el of elements) {
+    nameMap[el.element_id] = el.element_name;
+  }
+}
+
+function convertCombinationsToNameBased() {
+  const converted = [];
+
   for (const c of combinations) {
+    const aName = nameMap[c.element_a_id];
+    const bName = nameMap[c.element_b_id];
+    const rName = nameMap[c.result_id];
+
+    if (!aName || !bName || !rName) continue;
+
+    converted.push({
+      combo_id: c.combo_id,
+      elementA: aName,
+      elementB: bName,
+      result: rName,
+      notes: c.notes
+    });
+  }
+
+  return converted;
+}
+
+function buildComboLookup(nameBasedCombos) {
+  comboLookup = {};
+  for (const c of nameBasedCombos) {
     const key = normalizeCombo(c.elementA, c.elementB);
     comboLookup[key] = c.combo_id;
   }
 }
 
-function renderElements() {
+// -----------------------------
+// UI Rendering
+// -----------------------------
+function renderElementsTierGrouped() {
   const container = document.getElementById("elements-container");
   if (!container) return;
+
   container.innerHTML = "";
 
-  elements.forEach((el) => {
-    const btn = document.createElement("button");
-    btn.className = "element-button";
-    btn.innerText = el.name;
-    btn.addEventListener("click", () => {
-      selectElement(el.name);
+  // Group elements by tier
+  const tiers = {};
+  for (const el of elements) {
+    if (!tiers[el.tier]) tiers[el.tier] = [];
+    tiers[el.tier].push(el);
+  }
+
+  // Sort tiers numerically
+  const sortedTierKeys = Object.keys(tiers).sort((a, b) => Number(a) - Number(b));
+
+  for (const tier of sortedTierKeys) {
+    const header = document.createElement("h2");
+    header.innerText = `Tier ${tier}`;
+    container.appendChild(header);
+
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "tier-group";
+
+    tiers[tier].forEach((el) => {
+      const btn = document.createElement("button");
+      btn.className = "element-button";
+      btn.innerText = el.element_name;
+      btn.addEventListener("click", () => selectElement(el.element_name));
+      groupDiv.appendChild(btn);
     });
-    container.appendChild(btn);
-  });
+
+    container.appendChild(groupDiv);
+  }
 }
 
 // -----------------------------
-// Selection & combine logic
+// Selection & Combine Logic
 // -----------------------------
 function selectElement(name) {
   if (!selectedA) {
@@ -143,20 +193,17 @@ function handleCombine() {
   const key = normalizeCombo(selectedA, selectedB);
   currentComboId = comboLookup[key] || null;
 
-  // Reset hint state for this new combo attempt
   currentHintLevel = 0;
   currentHints = [];
   displayHint("");
 
-  // Find result
-  const result = combinations.find(
+  const result = combinationsNameBased.find(
     (c) =>
       (c.elementA === selectedA && c.elementB === selectedB) ||
       (c.elementA === selectedB && c.elementB === selectedA)
   );
 
   if (result) {
-    // Replace with your in-game discovery flow instead of alert if desired
     alert(`You discovered: ${result.result}`);
   } else {
     alert("No discovery found.");
@@ -166,7 +213,7 @@ function handleCombine() {
 }
 
 // -----------------------------
-// Hint handler
+// Hint Logic
 // -----------------------------
 async function handleHintButton() {
   if (!currentComboId) {
@@ -175,7 +222,7 @@ async function handleHintButton() {
   }
 
   if (currentHints.length === 0) {
-    currentHints = await getHintsForCombo(currentComboId);
+    currentHints = await fetchHints(currentComboId);
   }
 
   if (currentHintLevel < currentHints.length) {
@@ -190,40 +237,31 @@ async function handleHintButton() {
 // -----------------------------
 // Initialization
 // -----------------------------
+let combinationsNameBased = [];
+
 async function init() {
   try {
-    // Load combinations
-    if (USE_COMBOS_FROM_SUPABASE) {
-      combinations = await fetchCombinationsFromSupabase();
-      if (!combinations || combinations.length === 0) {
-        // fallback to local if Supabase returned nothing
-        combinations = localCombinations || [];
-      }
-    } else {
-      combinations = localCombinations || [];
+    let fetchedElements = null;
+    let fetchedCombos = null;
+
+    if (USE_SUPABASE) {
+      fetchedElements = await fetchElementsFromSupabase();
+      fetchedCombos = await fetchCombinationsFromSupabase();
     }
 
-    // Load elements
-    if (USE_ELEMENTS_FROM_SUPABASE) {
-      const fetched = await fetchElementsFromSupabase();
-      elements = (fetched || []).map(e => ({ id: e.id, name: e.name }));
-      if (!elements || elements.length === 0) {
-        elements = localElements || [];
-      }
-    } else {
-      elements = localElements || [];
-    }
+    // Fallback logic
+    elements = fetchedElements || localElements;
+    combinations = fetchedCombos || localCombinations;
 
-    // Build lookup and render UI
-    buildComboLookup();
-    renderElements();
+    buildNameMap();
 
-    // Hook up buttons
-    const combineBtn = document.getElementById("combineButton");
-    if (combineBtn) combineBtn.addEventListener("click", handleCombine);
+    combinationsNameBased = convertCombinationsToNameBased();
+    buildComboLookup(combinationsNameBased);
 
-    const hintBtn = document.getElementById("hintButton");
-    if (hintBtn) hintBtn.addEventListener("click", handleHintButton);
+    renderElementsTierGrouped();
+
+    document.getElementById("combineButton").addEventListener("click", handleCombine);
+    document.getElementById("hintButton").addEventListener("click", handleHintButton);
 
     updateSelectedDisplay();
   } catch (err) {
