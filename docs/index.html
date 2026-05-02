@@ -1,38 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Little US History</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
 <body>
-  <h1>My Little US History</h1>
 
-  <div id="game-container">
-    <div id="elements-container"></div>
-
-    <div id="combine-area">
-      <p>Select two elements to combine</p>
-      <div id="selected-elements"></div>
-      <button id="combineButton">Combine</button>
-    </div>
-
-    <div id="hint-section">
-      <button id="hintButton">Get Hint</button>
-      <div id="hintDisplay"></div>
-    </div>
-  </div>
-
-  <!-- Load main game logic as a module -->
-  <script type="module" src="./main.js"></script>
-</body>
+  <!-- Username Modal -->
   <div id="username-modal" class="modal">
-  <div class="modal-content">
-    <h2>Choose a Username</h2>
-    <input id="username-input" type="text" placeholder="Enter username">
-    <button id="username-submit">Start</button>
+    <div class="modal-content">
+      <h2>Choose a Username</h2>
+      <input id="username-input" type="text" placeholder="Enter username">
+      <button id="username-submit">Start</button>
+    </div>
   </div>
-</div>
 
-</html>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <button id="nav-play">Play</button>
+    <button id="nav-discovered">Discovered</button>
+    <button id="nav-settings">Settings</button>
+  </div>
+
+  <!-- Main Layout: Sidebar + Drop Zone -->
+  <div id="layout">
+
+    <!-- Sidebar with draggable elements -->
+    <div id="sidebar">
+      <h2>Elements</h2>
+      <div id="sidebar-elements"></div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div id="drop-zone">
+      <h2>Combine Elements</h2>
+
+      <div class="drop-slot" id="slotA">Drop first element</div>
+      <div class="drop-slot" id="slotB">Drop second element</div>
+
+      <div id="combine-area">
+        <button id="combineButton">Combine</button>
+        <button id="hintButton">Hint</button>
+        <div id="hintDisplay"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main Game Script -->
+  <script src="main.js" type="module"></script>
+
+</body>
