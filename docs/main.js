@@ -1,8 +1,14 @@
 // main.js
-// Full game logic: Supabase, save system, drag & drop, hints, discovery tracking
+// Full game logic: Supabase, save system, drag & drop, hints, navigation, discovered, settings
 
 import supabase from "./src/utils/supabaseClient.js";
-import { loadUsername, saveUsername, loadProgress, saveDiscovery, syncLocalToSupabase } from "./src/utils/saveSystem.js";
+import {
+  loadUsername,
+  saveUsername,
+  loadProgress,
+  saveDiscovery,
+  syncLocalToSupabase
+} from "./src/utils/saveSystem.js";
 import { elements as localElements } from "./src/game/elements.js";
 import { combinations as localCombinations } from "./src/game/combinations.js";
 
@@ -65,6 +71,27 @@ function setupUsernameModal() {
       hideUsernameModal();
       initAfterUsername();
     }
+  });
+}
+
+// --------------------------------------------------
+// Navigation
+// --------------------------------------------------
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach((s) => (s.style.display = "none"));
+  document.getElementById(`screen-${name}`).style.display = "block";
+}
+
+function setupNavigation() {
+  document.getElementById("nav-play").addEventListener("click", () => showScreen("play"));
+
+  document.getElementById("nav-discovered").addEventListener("click", () => {
+    renderDiscoveredPage();
+    showScreen("discovered");
+  });
+
+  document.getElementById("nav-settings").addEventListener("click", () => {
+    showScreen("settings");
   });
 }
 
@@ -147,7 +174,6 @@ function renderSidebar() {
   const container = document.getElementById("sidebar-elements");
   container.innerHTML = "";
 
-  // Group by tier
   const tiers = {};
   for (const el of elements) {
     if (!tiers[el.tier]) tiers[el.tier] = [];
@@ -246,12 +272,12 @@ async function handleCombine() {
   if (result) {
     alert(`You discovered: ${result.result}`);
 
-    // Save discovery
     const resultId = Object.keys(nameMap).find(
       (id) => nameMap[id] === result.result
     );
     if (resultId) {
       await saveDiscovery(username, resultId);
+      discoveredElements = await loadProgress(username);
     }
   } else {
     alert("No discovery found.");
@@ -282,6 +308,94 @@ async function handleHint() {
 }
 
 // --------------------------------------------------
+// Discovered Page (D-B card grid)
+// --------------------------------------------------
+function renderDiscoveredPage() {
+  const container = document.getElementById("discovered-list");
+  container.innerHTML = "";
+
+  const discoveredIds = discoveredElements.map((d) => d.element_id);
+  const discovered = elements.filter((el) => discoveredIds.includes(el.element_id));
+
+  const percent = elements.length
+    ? Math.round((discovered.length / elements.length) * 100)
+    : 0;
+  document.getElementById("discover-progress").style.width = percent + "%";
+
+  const tiers = {};
+  for (const el of discovered) {
+    if (!tiers[el.tier]) tiers[el.tier] = [];
+    tiers[el.tier].push(el);
+  }
+
+  const sortedTiers = Object.keys(tiers).sort((a, b) => Number(a) - Number(b));
+
+  for (const tier of sortedTiers) {
+    const header = document.createElement("h3");
+    header.innerText = `Tier ${tier}`;
+    container.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(200px, 1fr))";
+    grid.style.gap = "12px";
+
+    tiers[tier].forEach((el) => {
+      const card = document.createElement("div");
+      card.className = "discovered-item";
+
+      const date = discoveredElements.find((d) => d.element_id === el.element_id)
+        ?.discovered_at;
+
+      card.innerHTML = `
+        <h4>${el.element_name}</h4>
+        <p><strong>Tier:</strong> ${el.tier}</p>
+        <p>${el.description || ""}</p>
+        <p><em>Discovered: ${
+          date ? new Date(date).toLocaleDateString() : "Unknown"
+        }</em></p>
+      `;
+
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  }
+}
+
+// --------------------------------------------------
+// Settings Page (S-B)
+// --------------------------------------------------
+function setupSettings() {
+  document
+    .getElementById("settings-save-username")
+    .addEventListener("click", () => {
+      const newName = document
+        .getElementById("settings-username")
+        .value.trim();
+      if (newName.length > 0) {
+        saveUsername(newName);
+        username = newName;
+        alert("Username updated.");
+      }
+    });
+
+  document.getElementById("settings-sync").addEventListener("click", async () => {
+    await syncLocalToSupabase(username);
+    alert("Progress synced.");
+  });
+
+  document.getElementById("settings-clear").addEventListener("click", () => {
+    localStorage.removeItem("mlh_local_progress");
+    alert("Local progress cleared.");
+  });
+
+  document.getElementById("settings-theme").addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+  });
+}
+
+// --------------------------------------------------
 // Initialization
 // --------------------------------------------------
 async function initAfterUsername() {
@@ -302,11 +416,15 @@ async function initAfterUsername() {
   renderSidebar();
   setupDropZone();
 
-  document.getElementById("combineButton").addEventListener("click", handleCombine);
+  document
+    .getElementById("combineButton")
+    .addEventListener("click", handleCombine);
   document.getElementById("hintButton").addEventListener("click", handleHint);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   setupUsernameModal();
+  setupNavigation();
+  setupSettings();
   if (username) initAfterUsername();
 });
