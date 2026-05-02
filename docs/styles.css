@@ -1,4 +1,250 @@
 /* --------------------------------------------------
+   Global Styles
+-------------------------------------------------- */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+}
+
+h1, h2, h3 {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  transition: 0.2s ease;
+}
+
+/* --------------------------------------------------
+   Navigation Bar (for Play / Discovered / Settings)
+-------------------------------------------------- */
+
+.navbar {
+  width: 100%;
+  background: #1e3a8a;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-size: 1.1rem;
+}
+
+.navbar button {
+  background: transparent;
+  color: white;
+  border: 2px solid transparent;
+  padding: 8px 14px;
+}
+
+.navbar button:hover {
+  border-bottom: 2px solid #93c5fd;
+}
+
+/* --------------------------------------------------
+   Main Layout
+-------------------------------------------------- */
+
+#game-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+/* --------------------------------------------------
+   Tier Grouping
+-------------------------------------------------- */
+
+.tier-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+h2 {
+  margin-top: 25px;
+  color: #1e3a8a;
+}
+
+/* --------------------------------------------------
+   Element Buttons (Card Style)
+-------------------------------------------------- */
+
+.element-button {
+  background: white;
+  border: 2px solid #d1d5db;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.element-button:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------
+   Combine Area
+-------------------------------------------------- */
+
+#combine-area {
+  margin-top: 30px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#selected-elements {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+#combineButton, #hintButton {
+  background: #2563eb;
+  color: white;
+  margin-right: 10px;
+}
+
+#combineButton:hover, #hintButton:hover {
+  background: #1d4ed8;
+}
+
+/* --------------------------------------------------
+   Hint Display
+-------------------------------------------------- */
+
+#hintDisplay {
+  margin-top: 12px;
+  padding: 10px;
+  background: #fef9c3;
+  border-left: 4px solid #facc15;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------
+   Username Modal (U1)
+-------------------------------------------------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+#username-input {
+  width: 90%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#username-submit {
+  margin-top: 15px;
+  background: #2563eb;
+  color: white;
+  width: 100%;
+}
+
+#username-submit:hover {
+  background: #1d4ed8;
+}
+
+/* --------------------------------------------------
+   Discovery Modal (for D2 or D4 later)
+-------------------------------------------------- */
+
+.discovery-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.discovery-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
+.discovery-content h2 {
+  color: #16a34a;
+  margin-bottom: 10px;
+}
+
+.discovery-content p {
+  font-size: 1.1rem;
+}
+
+/* --------------------------------------------------
+   Discovered Page (coming next)
+-------------------------------------------------- */
+
+.discovered-container {
+  padding: 20px;
+}
+
+.discovered-item {
+  background: white;
+  border: 2px solid #d1d5db;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.progress-bar {
+  height: 12px;
+  background: #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #16a34a;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+/* --------------------------------------------------
    Layout with Sidebar + Drop Zone
 -------------------------------------------------- */
 
