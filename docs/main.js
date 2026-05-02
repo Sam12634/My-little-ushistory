@@ -1,33 +1,32 @@
 // main.js
-// Supabase-first, local fallback, UUID-aware, tier-grouped UI
+// Full game logic: Supabase, save system, drag & drop, hints, discovery tracking
 
 import supabase from "./src/utils/supabaseClient.js";
+import { loadUsername, saveUsername, loadProgress, saveDiscovery, syncLocalToSupabase } from "./src/utils/saveSystem.js";
 import { elements as localElements } from "./src/game/elements.js";
 import { combinations as localCombinations } from "./src/game/combinations.js";
 
-// -----------------------------
-// Config
-// -----------------------------
-const USE_SUPABASE = true; // always try Supabase first
+// --------------------------------------------------
+// Game State
+// --------------------------------------------------
+let username = null;
+let elements = [];
+let combinations = [];
+let nameMap = {};
+let combinationsNameBased = [];
+let comboLookup = {};
+let discoveredElements = [];
 
-// -----------------------------
-// Game state
-// -----------------------------
-let elements = [];          // full element objects
-let combinations = [];      // full combination objects
-let nameMap = {};           // uuid → element_name
-let comboLookup = {};       // "A-B" → combo_id
-
-let selectedA = null;
-let selectedB = null;
+let slotA = null;
+let slotB = null;
 
 let currentComboId = null;
 let currentHintLevel = 0;
 let currentHints = [];
 
-// -----------------------------
-// Utility helpers
-// -----------------------------
+// --------------------------------------------------
+// Utility
+// --------------------------------------------------
 function normalizeCombo(a, b) {
   return [a, b].sort().join("-");
 }
@@ -37,23 +36,47 @@ function displayHint(text) {
   if (el) el.innerText = text || "";
 }
 
-function updateSelectedDisplay() {
-  const el = document.getElementById("selected-elements");
-  if (el) el.innerText = `${selectedA || ""} ${selectedB || ""}`.trim();
+// --------------------------------------------------
+// Username Modal
+// --------------------------------------------------
+function showUsernameModal() {
+  document.getElementById("username-modal").style.display = "flex";
 }
 
-// -----------------------------
-// Supabase fetchers
-// -----------------------------
+function hideUsernameModal() {
+  document.getElementById("username-modal").style.display = "none";
+}
+
+function setupUsernameModal() {
+  const saved = loadUsername();
+  if (saved) {
+    username = saved;
+    hideUsernameModal();
+    return;
+  }
+
+  showUsernameModal();
+
+  document.getElementById("username-submit").addEventListener("click", () => {
+    const input = document.getElementById("username-input").value.trim();
+    if (input.length > 0) {
+      username = input;
+      saveUsername(input);
+      hideUsernameModal();
+      initAfterUsername();
+    }
+  });
+}
+
+// --------------------------------------------------
+// Supabase Fetchers
+// --------------------------------------------------
 async function fetchElementsFromSupabase() {
   const { data, error } = await supabase
     .from("elements")
     .select("element_id, element_name, tier, description");
 
-  if (error) {
-    console.error("Error fetching elements:", error);
-    return null;
-  }
+  if (error) return null;
   return data;
 }
 
@@ -62,10 +85,7 @@ async function fetchCombinationsFromSupabase() {
     .from("combinations")
     .select("combo_id, element_a_id, element_b_id, result_id, notes");
 
-  if (error) {
-    console.error("Error fetching combinations:", error);
-    return null;
-  }
+  if (error) return null;
   return data;
 }
 
@@ -76,16 +96,13 @@ async function fetchHints(comboId) {
     .eq("combo_id", comboId)
     .order("hint_level", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching hints:", error);
-    return [];
-  }
+  if (error) return [];
   return data || [];
 }
 
-// -----------------------------
-// Data transformation
-// -----------------------------
+// --------------------------------------------------
+// Data Processing
+// --------------------------------------------------
 function buildNameMap() {
   nameMap = {};
   for (const el of elements) {
@@ -115,82 +132,105 @@ function convertCombinationsToNameBased() {
   return converted;
 }
 
-function buildComboLookup(nameBasedCombos) {
+function buildComboLookup(nameBased) {
   comboLookup = {};
-  for (const c of nameBasedCombos) {
+  for (const c of nameBased) {
     const key = normalizeCombo(c.elementA, c.elementB);
     comboLookup[key] = c.combo_id;
   }
 }
 
-// -----------------------------
-// UI Rendering
-// -----------------------------
-function renderElementsTierGrouped() {
-  const container = document.getElementById("elements-container");
-  if (!container) return;
-
+// --------------------------------------------------
+// Sidebar Rendering
+// --------------------------------------------------
+function renderSidebar() {
+  const container = document.getElementById("sidebar-elements");
   container.innerHTML = "";
 
-  // Group elements by tier
+  // Group by tier
   const tiers = {};
   for (const el of elements) {
     if (!tiers[el.tier]) tiers[el.tier] = [];
     tiers[el.tier].push(el);
   }
 
-  // Sort tiers numerically
-  const sortedTierKeys = Object.keys(tiers).sort((a, b) => Number(a) - Number(b));
+  const sortedTiers = Object.keys(tiers).sort((a, b) => Number(a) - Number(b));
 
-  for (const tier of sortedTierKeys) {
-    const header = document.createElement("h2");
+  for (const tier of sortedTiers) {
+    const header = document.createElement("h3");
     header.innerText = `Tier ${tier}`;
     container.appendChild(header);
 
-    const groupDiv = document.createElement("div");
-    groupDiv.className = "tier-group";
-
     tiers[tier].forEach((el) => {
-      const btn = document.createElement("button");
-      btn.className = "element-button";
-      btn.innerText = el.element_name;
-      btn.addEventListener("click", () => selectElement(el.element_name));
-      groupDiv.appendChild(btn);
+      const div = document.createElement("div");
+      div.className = "sidebar-element";
+      div.innerText = el.element_name;
+      div.draggable = true;
+
+      div.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", el.element_name);
+      });
+
+      container.appendChild(div);
     });
-
-    container.appendChild(groupDiv);
   }
 }
 
-// -----------------------------
-// Selection & Combine Logic
-// -----------------------------
-function selectElement(name) {
-  if (!selectedA) {
-    selectedA = name;
-  } else if (!selectedB) {
-    if (selectedA === name) {
-      selectedA = null;
-    } else {
-      selectedB = name;
+// --------------------------------------------------
+// Drag & Drop Logic
+// --------------------------------------------------
+function setupDropZone() {
+  const dropZone = document.getElementById("drop-zone");
+  const slotAEl = document.getElementById("slotA");
+  const slotBEl = document.getElementById("slotB");
+
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("drag-over");
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("drag-over");
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("drag-over");
+
+    const name = e.dataTransfer.getData("text/plain");
+    if (!slotA) {
+      slotA = name;
+      slotAEl.innerText = name;
+      slotAEl.classList.add("filled");
+    } else if (!slotB) {
+      slotB = name;
+      slotBEl.innerText = name;
+      slotBEl.classList.add("filled");
     }
-  } else {
-    selectedA = name;
-    selectedB = null;
-  }
-  updateSelectedDisplay();
+  });
 }
 
-function resetSelectionUI() {
-  selectedA = null;
-  selectedB = null;
-  updateSelectedDisplay();
+// --------------------------------------------------
+// Combine Logic
+// --------------------------------------------------
+function clearSlots() {
+  slotA = null;
+  slotB = null;
+
+  const slotAEl = document.getElementById("slotA");
+  const slotBEl = document.getElementById("slotB");
+
+  slotAEl.innerText = "Drop first element";
+  slotBEl.innerText = "Drop second element";
+
+  slotAEl.classList.remove("filled");
+  slotBEl.classList.remove("filled");
 }
 
-function handleCombine() {
-  if (!selectedA || !selectedB) return;
+async function handleCombine() {
+  if (!slotA || !slotB) return;
 
-  const key = normalizeCombo(selectedA, selectedB);
+  const key = normalizeCombo(slotA, slotB);
   currentComboId = comboLookup[key] || null;
 
   currentHintLevel = 0;
@@ -199,25 +239,33 @@ function handleCombine() {
 
   const result = combinationsNameBased.find(
     (c) =>
-      (c.elementA === selectedA && c.elementB === selectedB) ||
-      (c.elementA === selectedB && c.elementB === selectedA)
+      (c.elementA === slotA && c.elementB === slotB) ||
+      (c.elementA === slotB && c.elementB === slotA)
   );
 
   if (result) {
     alert(`You discovered: ${result.result}`);
+
+    // Save discovery
+    const resultId = Object.keys(nameMap).find(
+      (id) => nameMap[id] === result.result
+    );
+    if (resultId) {
+      await saveDiscovery(username, resultId);
+    }
   } else {
     alert("No discovery found.");
   }
 
-  resetSelectionUI();
+  clearSlots();
 }
 
-// -----------------------------
+// --------------------------------------------------
 // Hint Logic
-// -----------------------------
-async function handleHintButton() {
+// --------------------------------------------------
+async function handleHint() {
   if (!currentComboId) {
-    displayHint("Try combining elements first to get a relevant hint.");
+    displayHint("Try combining elements first.");
     return;
   }
 
@@ -226,48 +274,39 @@ async function handleHintButton() {
   }
 
   if (currentHintLevel < currentHints.length) {
-    const hint = currentHints[currentHintLevel];
-    displayHint(hint.hint_text);
+    displayHint(currentHints[currentHintLevel].hint_text);
     currentHintLevel++;
   } else {
-    displayHint("No more hints available for this combo.");
+    displayHint("No more hints available.");
   }
 }
 
-// -----------------------------
+// --------------------------------------------------
 // Initialization
-// -----------------------------
-let combinationsNameBased = [];
+// --------------------------------------------------
+async function initAfterUsername() {
+  await syncLocalToSupabase(username);
 
-async function init() {
-  try {
-    let fetchedElements = null;
-    let fetchedCombos = null;
+  let fetchedElements = await fetchElementsFromSupabase();
+  let fetchedCombos = await fetchCombinationsFromSupabase();
 
-    if (USE_SUPABASE) {
-      fetchedElements = await fetchElementsFromSupabase();
-      fetchedCombos = await fetchCombinationsFromSupabase();
-    }
+  elements = fetchedElements || localElements;
+  combinations = fetchedCombos || localCombinations;
 
-    // Fallback logic
-    elements = fetchedElements || localElements;
-    combinations = fetchedCombos || localCombinations;
+  buildNameMap();
+  combinationsNameBased = convertCombinationsToNameBased();
+  buildComboLookup(combinationsNameBased);
 
-    buildNameMap();
+  discoveredElements = await loadProgress(username);
 
-    combinationsNameBased = convertCombinationsToNameBased();
-    buildComboLookup(combinationsNameBased);
+  renderSidebar();
+  setupDropZone();
 
-    renderElementsTierGrouped();
-
-    document.getElementById("combineButton").addEventListener("click", handleCombine);
-    document.getElementById("hintButton").addEventListener("click", handleHintButton);
-
-    updateSelectedDisplay();
-  } catch (err) {
-    console.error("Initialization error:", err);
-    displayHint("Initialization failed. Check console for details.");
-  }
+  document.getElementById("combineButton").addEventListener("click", handleCombine);
+  document.getElementById("hintButton").addEventListener("click", handleHint);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  setupUsernameModal();
+  if (username) initAfterUsername();
+});
