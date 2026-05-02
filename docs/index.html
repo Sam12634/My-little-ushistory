@@ -24,29 +24,62 @@
     <button id="nav-settings">Settings</button>
   </div>
 
-  <!-- Main Layout: Sidebar + Drop Zone -->
-  <div id="layout">
+  <!-- PLAY SCREEN -->
+  <div id="screen-play" class="screen">
+    <div id="layout">
 
-    <!-- Sidebar with draggable elements -->
-    <div id="sidebar">
-      <h2>Elements</h2>
-      <div id="sidebar-elements"></div>
-    </div>
-
-    <!-- Drop Zone -->
-    <div id="drop-zone">
-      <h2>Combine Elements</h2>
-
-      <div class="drop-slot" id="slotA">Drop first element</div>
-      <div class="drop-slot" id="slotB">Drop second element</div>
-
-      <div id="combine-area">
-        <button id="combineButton">Combine</button>
-        <button id="hintButton">Hint</button>
-        <div id="hintDisplay"></div>
+      <!-- Sidebar with draggable elements -->
+      <div id="sidebar">
+        <h2>Elements</h2>
+        <div id="sidebar-elements"></div>
       </div>
-    </div>
 
+      <!-- Drop Zone -->
+      <div id="drop-zone">
+        <h2>Combine Elements</h2>
+
+        <div class="drop-slot" id="slotA">Drop first element</div>
+        <div class="drop-slot" id="slotB">Drop second element</div>
+
+        <div id="combine-area">
+          <button id="combineButton">Combine</button>
+          <button id="hintButton">Hint</button>
+          <div id="hintDisplay"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DISCOVERED SCREEN -->
+  <div id="screen-discovered" class="screen" style="display:none;">
+    <div class="discovered-container">
+      <h2>Discovered Elements</h2>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="discover-progress"></div>
+      </div>
+
+      <div id="discovered-list"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS SCREEN -->
+  <div id="screen-settings" class="screen" style="display:none;">
+    <div class="settings-container">
+      <h2>Settings</h2>
+
+      <h3>Change Username</h3>
+      <input id="settings-username" type="text" placeholder="New username">
+      <button id="settings-save-username">Save Username</button>
+
+      <h3>Progress</h3>
+      <button id="settings-sync">Sync Progress</button>
+      <button id="settings-clear">Clear Local Progress</button>
+
+      <h3>Appearance</h3>
+      <button id="settings-theme">Toggle Light/Dark</button>
+    </div>
   </div>
 
   <!-- Main Game Script -->
