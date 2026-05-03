@@ -1,16 +1,17 @@
 // main.js
 // Full game logic with sound support added
 
-import supabase from "./utils/supabaseClient.js";
+import supabase from "./src/utils/supabaseClient.js";
 import {
   loadUsername,
   saveUsername,
   loadProgress,
   saveDiscovery,
   syncLocalToSupabase
-} from "./utils/saveSystem.js";
-import { elements as localElements } from "./game/elements.js";
-import { combinations as localCombinations } from "./game/combinations.js";
+} from "./src/utils/saveSystem.js";
+import { elements as localElements } from "./src/game/elements.js";
+import { combinations as localCombinations } from "./src/game/combinations.js";
+
 
 // --------------------------------------------------
 // Sound Manager
