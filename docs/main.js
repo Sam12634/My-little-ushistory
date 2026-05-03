@@ -13,6 +13,26 @@ import { elements as localElements } from "./src/game/elements.js";
 import { combinations as localCombinations } from "./src/game/combinations.js";
 
 // --------------------------------------------------
+// Sound Manager
+// --------------------------------------------------
+let soundEnabled = true;
+
+const sounds = {
+  drag: new Audio("./sounds/drag.mp3"),
+  success: new Audio("./sounds/success.mp3"),
+  fail: new Audio("./sounds/fail.mp3")
+};
+
+function playSound(name) {
+  if (!soundEnabled) return;
+  const s = sounds[name];
+  if (s) {
+    s.currentTime = 0;
+    s.play();
+  }
+}
+
+// --------------------------------------------------
 // Game State
 // --------------------------------------------------
 let username = null;
