@@ -1,16 +1,16 @@
 // main.js
-// Full game logic: Supabase, save system, drag & drop, hints, navigation, discovered, settings
+// Full game logic with sound support added
 
-import supabase from "./src/utils/supabaseClient.js";
+import supabase from "./utils/supabaseClient.js";
 import {
   loadUsername,
   saveUsername,
   loadProgress,
   saveDiscovery,
   syncLocalToSupabase
-} from "./src/utils/saveSystem.js";
-import { elements as localElements } from "./src/game/elements.js";
-import { combinations as localCombinations } from "./src/game/combinations.js";
+} from "./utils/saveSystem.js";
+import { elements as localElements } from "./game/elements.js";
+import { combinations as localCombinations } from "./game/combinations.js";
 
 // --------------------------------------------------
 // Sound Manager
@@ -214,6 +214,7 @@ function renderSidebar() {
       div.draggable = true;
 
       div.addEventListener("dragstart", (e) => {
+        playSound("drag");
         e.dataTransfer.setData("text/plain", el.element_name);
       });
 
@@ -290,6 +291,7 @@ async function handleCombine() {
   );
 
   if (result) {
+    playSound("success");
     alert(`You discovered: ${result.result}`);
 
     const resultId = Object.keys(nameMap).find(
@@ -300,6 +302,7 @@ async function handleCombine() {
       discoveredElements = await loadProgress(username);
     }
   } else {
+    playSound("fail");
     alert("No discovery found.");
   }
 
@@ -328,7 +331,7 @@ async function handleHint() {
 }
 
 // --------------------------------------------------
-// Discovered Page (D-B card grid)
+// Discovered Page
 // --------------------------------------------------
 function renderDiscoveredPage() {
   const container = document.getElementById("discovered-list");
@@ -384,7 +387,7 @@ function renderDiscoveredPage() {
 }
 
 // --------------------------------------------------
-// Settings Page (S-B)
+// Settings Page
 // --------------------------------------------------
 function setupSettings() {
   document
@@ -412,6 +415,12 @@ function setupSettings() {
 
   document.getElementById("settings-theme").addEventListener("click", () => {
     document.body.classList.toggle("dark");
+  });
+
+  // Sound toggle button
+  document.getElementById("settings-sound").addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    alert(soundEnabled ? "Sound enabled" : "Sound disabled");
   });
 }
 
